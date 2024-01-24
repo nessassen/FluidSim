@@ -4,37 +4,42 @@ using UnityEngine;
 
 public class FluidSim : MonoBehaviour
 {
+    public Vector2 dimensions;
     public Camera cam;
     public GameObject cyan;
     public GameObject rendObjA;
     public GameObject rendObjB;
     public RenderTexture rendTexA;
     public RenderTexture rendTexB;
-    public Texture2D dstTex;
-    public Sprite dstSprite; // For testing
     public MeshRenderer effectRenderer;
-    public bool isTexATarget;
+    public MeshRenderer copyRenderer;
+    public Texture2D dstTex;
 
     private Material effectMaterial;
+    private Material copyMaterial;
     private Rect cameraViewRect;
+    private bool isTexATarget;
 
-    public Vector2 dimensions;
-
-    void Start()
+    void Awake()
     {
         cyan.SetActive(true);
         rendObjA.SetActive(false);
         rendObjB.SetActive(true);
+        
+        cameraViewRect = new Rect(0, 0, dimensions.x, dimensions.y);
+        Camera.onPostRender += OnPostRenderCallback;
         cam.targetTexture = rendTexA;
         isTexATarget = true;
-        effectMaterial = effectRenderer.material;
-        effectMaterial.SetTexture("_FluidTex", rendTexB);
+
         dstTex = new Texture2D(Mathf.RoundToInt(dimensions.x), Mathf.RoundToInt(dimensions.y));
         dstTex.filterMode = FilterMode.Point;
         dstTex.anisoLevel = 0;
-        //effectMaterial.SetTexture("_MainTex", dstTex);
-        cameraViewRect = new Rect(0, 0, dimensions.x, dimensions.y);
-        //Camera.onPostRender += OnPostRenderCallback;
+
+        effectMaterial = effectRenderer.material;
+        effectMaterial.SetTexture("_FluidTex", rendTexB);
+
+        copyMaterial = copyRenderer.material;
+        copyMaterial.SetTexture("_MainTex", dstTex);
     }
 
     void Update()
@@ -61,7 +66,7 @@ public class FluidSim : MonoBehaviour
     
     void OnDestroy()
     {
-        //Camera.onPostRender -= OnPostRenderCallback;
+        Camera.onPostRender -= OnPostRenderCallback;
     }
 
     void OnPostRenderCallback(Camera c)

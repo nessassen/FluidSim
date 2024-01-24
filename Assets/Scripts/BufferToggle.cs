@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BufferToggle : MonoBehaviour
+public class FluidSim : MonoBehaviour
 {
     public Camera cam;
     public GameObject cyan;
@@ -10,10 +10,15 @@ public class BufferToggle : MonoBehaviour
     public GameObject rendObjB;
     public RenderTexture rendTexA;
     public RenderTexture rendTexB;
+    public Texture2D dstTex;
+    public Sprite dstSprite; // For testing
     public MeshRenderer effectRenderer;
-    public bool drawTexA;
+    public bool isTexATarget;
 
     private Material effectMaterial;
+    private Rect cameraViewRect;
+
+    public Vector2 dimensions;
 
     void Start()
     {
@@ -21,28 +26,50 @@ public class BufferToggle : MonoBehaviour
         rendObjA.SetActive(false);
         rendObjB.SetActive(true);
         cam.targetTexture = rendTexA;
-        drawTexA = true;
+        isTexATarget = true;
         effectMaterial = effectRenderer.material;
-        effectMaterial.SetTexture("Fluid", rendTexB);
+        effectMaterial.SetTexture("_FluidTex", rendTexB);
+        dstTex = new Texture2D(Mathf.RoundToInt(dimensions.x), Mathf.RoundToInt(dimensions.y));
+        dstTex.filterMode = FilterMode.Point;
+        dstTex.anisoLevel = 0;
+        //effectMaterial.SetTexture("_MainTex", dstTex);
+        cameraViewRect = new Rect(0, 0, dimensions.x, dimensions.y);
+        //Camera.onPostRender += OnPostRenderCallback;
     }
 
     void Update()
     {
-        if(drawTexA)
+        if(isTexATarget)
         {
+            //Rendering.AsyncGPUReadback.RequestIntoNativeArray(rendTexA, dstTex);
             rendObjA.SetActive(true);
             rendObjB.SetActive(false);
             cam.targetTexture = rendTexB;
-            effectMaterial.SetTexture("Fluid", rendTexA);
+            effectMaterial.SetTexture("_FluidTex", rendTexA);
         }
         else
         {
-            cyan.SetActive(false);
+            //Rendering.AsyncGPUReadback.RequestIntoNativeArray(rendTexB, dstTex);
             rendObjA.SetActive(false);
             rendObjB.SetActive(true);
             cam.targetTexture = rendTexA;
-            effectMaterial.SetTexture("Fluid", rendTexB);
+            effectMaterial.SetTexture("_FluidTex", rendTexB);
+            cyan.SetActive(false);
         }
-        drawTexA = !drawTexA;
+        isTexATarget = !isTexATarget;
+    }
+    
+    void OnDestroy()
+    {
+        //Camera.onPostRender -= OnPostRenderCallback;
+    }
+
+    void OnPostRenderCallback(Camera c)
+    {
+        if(c == cam && dstTex != null)
+        {
+            dstTex.ReadPixels(cameraViewRect, 0, 0, false);
+            dstTex.Apply();
+        }
     }
 }

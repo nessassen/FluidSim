@@ -3,8 +3,8 @@ Shader "Unlit/FluidSim"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        _Width ("Width", Float) = 256
-        _Height ("Height", Float) = 256
+        _Width ("Width", Float) = 512
+        _Height ("Height", Float) = 512
         _Step ("Step", Float) = 2
         _Damping ("Damping", Float) = .99
     }

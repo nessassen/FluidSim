@@ -5,6 +5,7 @@ using UnityEngine;
 public class FluidSim : MonoBehaviour
 {
     public Vector2 dimensions;
+    public float fluidForce;
     public Camera cam;
     public GameObject cyan;
     public GameObject rendObjA;

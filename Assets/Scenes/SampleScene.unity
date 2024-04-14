@@ -263,13 +263,14 @@ GameObject:
   - component: {fileID: 340630450}
   - component: {fileID: 340630449}
   - component: {fileID: 340630448}
+  - component: {fileID: 340630452}
   m_Layer: 0
   m_Name: SquarePhysics
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!50 &340630448
 Rigidbody2D:
   serializedVersion: 4
@@ -283,7 +284,7 @@ Rigidbody2D:
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 1
-  m_LinearDrag: 0
+  m_LinearDrag: 0.5
   m_AngularDrag: 0.05
   m_GravityScale: 0
   m_Material: {fileID: 0}
@@ -311,7 +312,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dimensions: {x: 16, y: 16}
   fluidSim: {fileID: 519420033}
-  rb: {fileID: 0}
+  rb: {fileID: 340630448}
 --- !u!212 &340630450
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -373,12 +374,24 @@ Transform:
   m_GameObject: {fileID: 340630447}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.35, y: 4.16, z: 1}
+  m_LocalPosition: {x: 2, y: 4, z: 1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &340630452
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 340630447}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa8f4245b55d0a24485c34eca1a0132c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -486,6 +499,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dimensions: {x: 256, y: 256}
+  fluidForce: 1
   cam: {fileID: 519420031}
   cyan: {fileID: 101119337}
   rendObjA: {fileID: 1330678902}
@@ -781,7 +795,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!212 &1262101023
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1127,7 +1141,7 @@ Transform:
   m_GameObject: {fileID: 1875328972}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -10.74, y: -0.41, z: -1}
+  m_LocalPosition: {x: -9.82, y: 9.46, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

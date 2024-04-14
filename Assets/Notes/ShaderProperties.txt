@@ -1,0 +1,10 @@
+Cyan->Scale
+Fluid Render->Scale / FluidEffect->Width / Height
+Fluid Copy->Scale
+FluidCamera->Size / FluidSim->Dimensions / PixelPerfectCamera->Resolution
+Fluid View A->Scale / FluidMaterialA->Width / Height
+Fluid View B->Scale / FluidMaterialB->Width / Height
+Textures->FluidTextureA->Size
+Textures->FluidTextureB->Size
+
+Maybe a script can let u set all of these in edit mode with a single property?

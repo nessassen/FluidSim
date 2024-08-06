@@ -65,21 +65,22 @@ Shader "Unlit/FluidSim"
             {
                 float4 bufCol = tex2D(_MainTex, i.uv);
 
-                float2 north = tex2D(_MainTex, i.uv + float2(0., -_Step / _Height)).br;
-                north.x = north.x * (1 - north.y) + .5 * north.y;
-                float2 south = tex2D(_MainTex, i.uv + float2(0., _Step / _Height)).br;
-                south.x = south.x * (1 - south.y) + .5 * south.y;
-                float2 west = tex2D(_MainTex, i.uv + float2(-_Step / _Width, 0.)).br;
-                west.x = west.x * (1 - west.y) + .5 * west.y;
-                float2 east = tex2D(_MainTex, i.uv + float2(_Step / _Width, 0.)).br;
-                east.x = east.x * (1 - east.y) + .5 * east.y;
+                //Sample blue and red of surrounding pixels. b of r pixels is averaged to .5
+                float2 north = tex2D(_MainTex, frac(i.uv + float2(0., -_Step / _Height))).br;
+                north.x = north.x * (1. - north.y) + .5 * north.y;
+                float2 south = tex2D(_MainTex, frac(i.uv + float2(0., _Step / _Height))).br;
+                south.x = south.x * (1. - south.y) + .5 * south.y;
+                float2 west = tex2D(_MainTex, frac(i.uv + float2(-_Step / _Width, 0.))).br;
+                west.x = west.x * (1. - west.y) + .5 * west.y;
+                float2 east = tex2D(_MainTex, frac(i.uv + float2(_Step / _Width, 0.))).br;
+                east.x = east.x * (1. - east.y) + .5 * east.y;
 
-                float smooth = (north.x + south.x + east.x + west.x) - 2;
-                float vel = (.5 - bufCol.g) * (1 - bufCol.r) * 2;
+                float smooth = (north.x + south.x + east.x + west.x) - 2.;
+                float vel = (.5 - bufCol.g) * (1. - bufCol.r) * 2.;
 
-                float g = bufCol.b * (1 - bufCol.r) + (bufCol.g * 2 - bufCol.r) * bufCol.r;                 //in fluid, blue turns to green. in solid, green remains so it can radiate after an object moves.
+                float g = bufCol.b * (1. - bufCol.r) + (bufCol.g * 2. - bufCol.r) * bufCol.r;                 //in fluid, blue turns to green. in solid, green remains so it can radiate after an object moves.
                 float b = (smooth + vel) * _Damping * .5 + .5;
-                float4 col = float4(0, g, b, 1);
+                float4 col = float4(0., g, b, 1.);
                 return col;
             }
             ENDCG

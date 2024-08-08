@@ -247,7 +247,6 @@ public class PixelPhysics : MonoBehaviour
             if ((otherCol.layers & mask) != 0 && PixelShape.CheckOverlap(shape, otherCol.shape))
             {
                 ret.Add(otherBody);
-                break;
             }
         }
         return ret;

@@ -25,11 +25,11 @@ public class PortalCameraTest : Box
         portalAudio.Play();
     }
 
-    public override void ExitPortal(Vector2Int step)
+    public override void ExitPortal(bool isPortalA, Vector2Int step)
     {
         StartCoroutine(exitFlash.Flash(telePortal.linkedPortal.color, flashDuration));
         //portalAudio.Play();
-        base.ExitPortal(step);
+        base.ExitPortal(isPortalA, step);
     }
 
     private void PositionEffects(PixelPortal portal)

@@ -147,13 +147,7 @@ public class PixelColliderRenderer : MonoBehaviour
 
     public bool GetColStatus()
     {
-        if (isTele)
-        {
-            return col.isActive && ((PixelTeleBody)col.body).inPortal;
-        }
-        else
-        {
-            return col.isActive;
-        }
+        return col.isActive;
     }
 }
+//Outdated component?

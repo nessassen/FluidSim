@@ -24,8 +24,5 @@ public class OctBox : PixelTeleBody
         PixelShape shape = new PixelOct((int)transform.position.x, (int)transform.position.x + size.x - 1, (int)transform.position.y, (int)transform.position.y + size.y - 1, diagonal);
         col = new PixelCollider(shape, (int)PixelPhysics.layers.player, int.MaxValue);
         col.body = this;
-        PixelShape teleShape = (PixelOct)shape.Clone();
-        teleCol = new PixelTeleCollider(teleShape, 1, int.MaxValue);
-        teleCol.body = this;
     }
 }

@@ -6,8 +6,6 @@ using UnityEngine;
 
 public class PixelTeleBody : PixelBody
 {
-    public PixelCollider teleCol;
-    public SpriteRenderer teleSprend;
     public PixelCollider teleColA;
     public SpriteRenderer teleSprendA;
     public PixelCollider teleColB;
@@ -17,15 +15,45 @@ public class PixelTeleBody : PixelBody
     public PixelPortal telePortal;
     public PixelPortal telePortalA;
     public PixelPortal telePortalB;
-    public bool inPortal;
     public bool inPortalA;
     public bool inPortalB;
 
     protected override void Awake()
     {
         base.Awake();
-        teleSprend.enabled = false;
-        teleSprend.transform.position = transform.position;
+        CreateTeleColliders();
+        teleColA.isActive = false;
+        teleSprendA.enabled = false;
+        teleSprendA.transform.position = transform.position;
+        teleColB.isActive = false;
+        teleSprendB.enabled = false;
+        teleSprendB.transform.position = transform.position;
+        teleColAB.isActive = false;
+        teleSprendAB.enabled = false;
+        teleSprendAB.transform.position = transform.position;
+    }
+
+    protected virtual void CreateTeleColliders()
+    {
+        if (col == null) return;
+        PixelShape teleShape = (PixelShape)col.shape.Clone();
+        teleColA = new PixelTeleCollider(teleShape, (ushort)col.layers, col.mask);
+        teleColA.body = this;
+        teleColA.isActive = false;
+        teleShape = (PixelShape)col.shape.Clone();
+        teleColB = new PixelTeleCollider(teleShape, (ushort)col.layers, col.mask);
+        teleColB.body = this;
+        teleColB.isActive = false;
+        teleShape = (PixelShape)col.shape.Clone();
+        teleColAB = new PixelTeleCollider(teleShape, (ushort)col.layers, col.mask);
+        teleColAB.body = this;
+        teleColAB.isActive = false;
+    }
+
+    protected override void Update()
+    {
+        //PixelOct oct = (PixelOct)col.shape;
+        //print(oct.left + ", " + oct.down);
     }
 
     public override void Move(Vector2Int step)
@@ -35,175 +63,363 @@ public class PixelTeleBody : PixelBody
 
     public virtual void TeleMove(Vector2Int step)
     {
-        Vector2Int teleStep;
-        if (inPortal)
+        Vector2Int teleStepA = step;
+        Vector2Int teleStepB = step;
+        Vector2Int teleStepAB = step;
+        if (inPortalA)
         {
-            if (telePortal.isLinkFlipped)
+            if (telePortalA.isLinkFlipped)
             {
-                teleStep = PixelMath.RotateVectorInt(PixelMath.ReflectVectorInt(step, telePortal.teleNormal), telePortal.linkRotation);
+                teleStepA = PixelMath.RotateVectorInt(PixelMath.ReflectVectorInt(step, telePortalA.teleNormal), telePortalB.linkRotation);
             }
             else
             {
-                teleStep = PixelMath.RotateVectorInt(step, telePortal.linkRotation);
+                teleStepA = PixelMath.RotateVectorInt(step, telePortalA.linkRotation);
+            }
+            if (inPortalB)
+            {
+                if (telePortalA.isLinkFlipped)
+                {
+                    teleStepAB = PixelMath.RotateVectorInt(PixelMath.ReflectVectorInt(step, telePortalA.teleNormal), telePortalB.linkRotation);
+                }
+                else
+                {
+                    teleStepAB = PixelMath.RotateVectorInt(step, telePortalA.linkRotation);
+                }
+                if (telePortalB.isLinkFlipped)
+                {
+                    teleStepAB = PixelMath.RotateVectorInt(PixelMath.ReflectVectorInt(teleStepAB, telePortalA.teleNormal), telePortalB.linkRotation);
+                }
+                else
+                {
+                    teleStepAB = PixelMath.RotateVectorInt(teleStepAB, telePortalA.linkRotation);
+                }
             }
         }
-        else
+        if (inPortalB)
         {
-            teleStep = step;
+            if (telePortalB.isLinkFlipped)
+            {
+                teleStepB = PixelMath.RotateVectorInt(PixelMath.ReflectVectorInt(step, telePortalB.teleNormal), telePortalB.linkRotation);
+            }
+            else
+            {
+                teleStepB = PixelMath.RotateVectorInt(step, telePortalB.linkRotation);
+            }
         }
         base.Move(step);
-        teleCol.Move(teleStep);
+        teleColA.Move(teleStepA);
+        teleColB.Move(teleStepB);
+        teleColAB.Move(teleStepAB);
         
         List<PixelBody> overlapPortals = new List<PixelBody>();
         overlapPortals.AddRange(pixelPhysics.Scan(col.shape, (int)PixelPhysics.layers.portal));
-        if (inPortal)
+        if (inPortalA)
         {
-            if (!overlapPortals.Contains(telePortal))
+            if (!overlapPortals.Contains(telePortalA))
             {
-                ExitPortal(step);
-                Move(step);
+                ExitPortal(true, step);
             }
         }
-        if (!inPortal)            // No else here in case the player exits one portal and enters another in the same frame.
+        if (inPortalB)
+        {
+            if (!overlapPortals.Contains(telePortalB))
+            {
+                ExitPortal(false, step);
+            }
+        }
+        if (!inPortalA)            // No else here in case the player exits one portal and enters another in the same frame.
         {
             if (overlapPortals.Count > 0)
             {
-                EnterPortal((PixelPortal)overlapPortals[0], step);
+                if(inPortalB && (PixelPortal)overlapPortals[0] == telePortalB)
+                {
+                    if(overlapPortals.Count > 1)
+                    {
+                        EnterPortal((PixelPortal)overlapPortals[1], step);
+                    }
+                }
+                else
+                {
+                    EnterPortal((PixelPortal)overlapPortals[0], step);
+                }
+            }
+        }
+        if(inPortalA && !inPortalB)
+        {
+            if (overlapPortals.Count > 1)
+            {
+                if ((PixelPortal)overlapPortals[0] == telePortalA)
+                {
+                    EnterPortal((PixelPortal)overlapPortals[1], step);
+                }
+                else
+                {
+                    EnterPortal((PixelPortal)overlapPortals[0], step);
+                }
             }
         }
     }
 
     public virtual void EnterPortal(PixelPortal portal, Vector2Int step)
     {
-        Debug.Log("enter");
-        inPortal = true;
-        telePortal = portal;
         Vector2 teleDelta;
-        float cos = Mathf.Cos(telePortal.linkRotation * Mathf.Deg2Rad);
-        float sin = Mathf.Sin(telePortal.linkRotation * Mathf.Deg2Rad);
-        if (telePortal.isLinkFlipped)
+        PixelCollider curCol;
+        SpriteRenderer curSprend;
+        if(inPortalA)
         {
-            teleCol.Reflect(telePortal.start, telePortal.end, telePortal.teleNormal);
-            teleCol.Rotate(telePortal.start, telePortal.linkRotation);
-            teleCol.Move(telePortal.linkOffset);
-
-            teleSprend.transform.RotateAround(new Vector3(telePortal.start.x + telePortal.end.x + 1f, telePortal.start.y + telePortal.end.y + 1f) / 2f, new Vector3(Mathf.Cos(telePortal.teleNormal), Mathf.Sin(telePortal.teleNormal), 0f), 180f);
-            teleSprend.transform.RotateAround(new Vector3(telePortal.start.x + cos, telePortal.start.y + sin), Vector3.forward, telePortal.linkRotation);
-            teleSprend.transform.position += new Vector3(telePortal.linkOffset.x, telePortal.linkOffset.y);
-            teleSprend.transform.position = new Vector3(Mathf.RoundToInt(teleSprend.transform.position.x), Mathf.RoundToInt(teleSprend.transform.position.y), Mathf.RoundToInt(teleSprend.transform.position.z));
-            teleDelta = PixelMath.RotateVector(Vector2.Reflect(delta, telePortal.teleNormalVec), telePortal.linkRotation);
+            inPortalB = true;
+            telePortalB = portal;
+            curCol = teleColB;
+            curSprend = teleSprendB;
         }
         else
         {
-            teleCol.Rotate(telePortal.start, telePortal.linkRotation);
-            teleCol.Move(telePortal.linkOffset);
+            inPortalA = true;
+            telePortalA = portal;
+            curCol = teleColA;
+            curSprend = teleSprendA;
+        }
+        curCol.isActive = true;
+        curSprend.enabled = true;
+        if(inPortalA && inPortalB)
+        {
+            teleColAB.isActive = true;
+            teleSprendAB.gameObject.SetActive(true);
+        }
+        float cos = Mathf.Cos(portal.linkRotation * Mathf.Deg2Rad);
+        float sin = Mathf.Sin(portal.linkRotation * Mathf.Deg2Rad);
+        if (portal.isLinkFlipped)
+        {
+            curCol.Reflect(portal.start, portal.end, portal.teleNormal);
+            curCol.Rotate(portal.start, portal.linkRotation);
+            curCol.Move(portal.linkOffset);
 
-            teleSprend.transform.RotateAround(new Vector3(telePortal.start.x + .5f, telePortal.start.y + .5f), Vector3.forward, telePortal.linkRotation);
-            teleSprend.transform.position += new Vector3(telePortal.linkOffset.x, telePortal.linkOffset.y);
-            teleSprend.transform.position = new Vector3(Mathf.Round(teleSprend.transform.position.x), Mathf.Round(teleSprend.transform.position.y), Mathf.Round(teleSprend.transform.position.z));
-            teleDelta = PixelMath.RotateVector(delta, telePortal.linkRotation);
+            curSprend.transform.RotateAround(new Vector3(portal.start.x + portal.end.x + 1f, portal.start.y + portal.end.y + 1f) / 2f, new Vector3(Mathf.Cos(portal.teleNormal), Mathf.Sin(portal.teleNormal), 0f), 180f);
+            curSprend.transform.RotateAround(new Vector3(portal.start.x + cos, portal.start.y + sin), Vector3.forward, portal.linkRotation);
+            curSprend.transform.position += new Vector3(portal.linkOffset.x, portal.linkOffset.y);
+            curSprend.transform.position = new Vector3(Mathf.RoundToInt(curSprend.transform.position.x), Mathf.RoundToInt(curSprend.transform.position.y), Mathf.RoundToInt(curSprend.transform.position.z));
+            teleDelta = PixelMath.RotateVector(Vector2.Reflect(delta, portal.teleNormalVec), portal.linkRotation);
+        }
+        else
+        {
+            curCol.Rotate(portal.start, portal.linkRotation);
+            curCol.Move(portal.linkOffset);
+
+            curSprend.transform.RotateAround(new Vector3(portal.start.x + .5f, portal.start.y + .5f), Vector3.forward, portal.linkRotation);
+            curSprend.transform.position += new Vector3(portal.linkOffset.x, portal.linkOffset.y);
+            curSprend.transform.position = new Vector3(Mathf.Round(curSprend.transform.position.x), Mathf.Round(curSprend.transform.position.y), Mathf.Round(curSprend.transform.position.z));
+            teleDelta = PixelMath.RotateVector(delta, portal.linkRotation);
         }
         int boundDispX = Mathf.FloorToInt(teleDelta.x + (0f < teleDelta.x ? 1f : 0f));
         int boundDispY = Mathf.FloorToInt(teleDelta.y + (0f < teleDelta.y ? 1f : 0f));
-        teleCol.SetBounds(new Vector2Int(boundDispX, boundDispY));
-        teleCol.nearbyColliders.Clear();
-        foreach (PixelCollider other in pixelPhysics.GetNearbyColliders(teleCol))
+        curCol.SetBounds(new Vector2Int(boundDispX, boundDispY));
+        curCol.nearbyColliders.Clear();
+        foreach (PixelCollider other in pixelPhysics.GetNearbyColliders(curCol))
         {
-            teleCol.nearbyColliders.Add(other);
-            other.nearbyColliders.Add(teleCol);
+            curCol.nearbyColliders.Add(other);
+            other.nearbyColliders.Add(curCol);
         }
-        teleSprend.enabled = true;
+        curCol.isActive = true;
+        curSprend.gameObject.SetActive(true);
+
+        if(inPortalA && inPortalB)
+        {
+            if (telePortalA.isLinkFlipped)
+            {
+                teleColAB.Reflect(telePortalA.start, telePortalA.end, telePortalA.teleNormal);
+                teleColAB.Rotate(telePortalA.start, telePortalA.linkRotation);
+                teleColAB.Move(telePortalA.linkOffset);
+
+                teleSprendAB.transform.RotateAround(new Vector3(telePortalA.start.x + telePortalA.end.x + 1f, telePortalA.start.y + telePortalA.end.y + 1f) / 2f, new Vector3(Mathf.Cos(telePortalA.teleNormal), Mathf.Sin(telePortalA.teleNormal), 0f), 180f);
+                teleSprendAB.transform.RotateAround(new Vector3(telePortalA.start.x + cos, telePortalA.start.y + sin), Vector3.forward, telePortalA.linkRotation);
+                teleSprendAB.transform.position += new Vector3(telePortalA.linkOffset.x, telePortalA.linkOffset.y);
+                teleSprendAB.transform.position = new Vector3(Mathf.RoundToInt(teleSprendAB.transform.position.x), Mathf.RoundToInt(teleSprendAB.transform.position.y), Mathf.RoundToInt(teleSprendAB.transform.position.z));
+            }
+            else
+            {
+                teleColAB.Rotate(telePortalA.start, telePortalA.linkRotation);
+                teleColAB.Move(telePortalA.linkOffset);
+
+                teleSprendAB.transform.RotateAround(new Vector3(telePortalA.start.x + .5f, telePortalA.start.y + .5f), Vector3.forward, telePortalA.linkRotation);
+                teleSprendAB.transform.position += new Vector3(telePortalA.linkOffset.x, telePortalA.linkOffset.y);
+                teleSprendAB.transform.position = new Vector3(Mathf.Round(teleSprendAB.transform.position.x), Mathf.Round(teleSprendAB.transform.position.y), Mathf.Round(teleSprendAB.transform.position.z));
+            }
+            if (telePortalB.isLinkFlipped)
+            {
+                teleColAB.Reflect(telePortalB.start, telePortalB.end, telePortalB.teleNormal);
+                teleColAB.Rotate(telePortalB.start, telePortalB.linkRotation);
+                teleColAB.Move(telePortalB.linkOffset);
+
+                teleSprendAB.transform.RotateAround(new Vector3(telePortalB.start.x + telePortalB.end.x + 1f, telePortalB.start.y + telePortalB.end.y + 1f) / 2f, new Vector3(Mathf.Cos(telePortalB.teleNormal), Mathf.Sin(telePortalB.teleNormal), 0f), 180f);
+                teleSprendAB.transform.RotateAround(new Vector3(telePortalB.start.x + cos, telePortalB.start.y + sin), Vector3.forward, telePortalB.linkRotation);
+                teleSprendAB.transform.position += new Vector3(telePortalB.linkOffset.x, telePortalB.linkOffset.y);
+                teleSprendAB.transform.position = new Vector3(Mathf.RoundToInt(teleSprendAB.transform.position.x), Mathf.RoundToInt(teleSprendAB.transform.position.y), Mathf.RoundToInt(teleSprendAB.transform.position.z));
+            }
+            else
+            {
+                teleColAB.Rotate(telePortalB.start, telePortalB.linkRotation);
+                teleColAB.Move(telePortalB.linkOffset);
+
+                teleSprendAB.transform.RotateAround(new Vector3(telePortalB.start.x + .5f, telePortalB.start.y + .5f), Vector3.forward, telePortalB.linkRotation);
+                teleSprendAB.transform.position += new Vector3(telePortalB.linkOffset.x, telePortalB.linkOffset.y);
+                teleSprendAB.transform.position = new Vector3(Mathf.Round(teleSprendAB.transform.position.x), Mathf.Round(teleSprendAB.transform.position.y), Mathf.Round(teleSprendAB.transform.position.z));
+            }
+            curCol.SetBounds(new Vector2Int(boundDispX, boundDispY));
+            curCol.nearbyColliders.Clear();
+            foreach (PixelCollider other in pixelPhysics.GetNearbyColliders(curCol))
+            {
+                curCol.nearbyColliders.Add(other);
+                other.nearbyColliders.Add(curCol);
+            }
+            curCol.isActive = true;
+            curSprend.enabled = true;
+        }
     }
 
-    public virtual void ExitPortal(Vector2Int step)
+    public virtual void ExitPortal(bool isPortalA, Vector2Int step)
     {
-        inPortal = false;
+        PixelPortal curPortal;
+        PixelCollider curCol;
+        SpriteRenderer curSprend;
+        if(isPortalA)
+        {
+            inPortalA = false;
+            curPortal = telePortalA;
+            curCol = teleColA;
+            curSprend = teleSprendA;
+        }
+        else
+        {
+            inPortalB = false;
+            curPortal = telePortalB;
+            curCol = teleColB;
+            curSprend = teleSprendB;
+        }
         if (Math.Abs(step.y) < Math.Abs(step.x))
         {
-            if (telePortal.teleNormalVec.x != 0 && Math.Sign(step.x) == -Math.Sign(telePortal.teleNormalVec.x))
+            if (curPortal.teleNormalVec.x != 0 && Math.Sign(step.x) == -Math.Sign(curPortal.teleNormalVec.x))
             {
-                Teleport();
+                TeleportThrough(isPortalA);
             }
             else
             {
-                teleSprend.transform.localRotation = Quaternion.identity;
-                teleSprend.transform.localPosition = Vector3.zero;
-                teleCol.shape = (PixelShape)col.shape.Clone();
+                TeleportBack(isPortalA);
             }
         }
         else
         {
-            if (telePortal.teleNormalVec.y != 0 && Math.Sign(step.y) == -Math.Sign(telePortal.teleNormalVec.y))
+            if (curPortal.teleNormalVec.y != 0 && Math.Sign(step.y) == -Math.Sign(curPortal.teleNormalVec.y))
             {
-                Teleport();
+
+                TeleportThrough(isPortalA);
             }
             else
             {
-                teleSprend.transform.localRotation = Quaternion.identity;
-                teleSprend.transform.localPosition = Vector3.zero;
-                teleCol.shape = (PixelShape)col.shape.Clone();
+                TeleportBack(isPortalA);
             }
         }
-        telePortal = null;
-        teleSprend.enabled = false;
+
+        if (isPortalA) telePortalA = null;
+        else telePortalB = null;
+        curCol.isActive = false;
+        curSprend.gameObject.SetActive(false);
+        teleColAB.isActive = false;
+        teleSprendAB.gameObject.SetActive(false);
     }
 
-    protected virtual void Teleport()
+    protected virtual void TeleportThrough(bool isPortalA)
     {
+        print("through");
         Vector2 teleDelta;
         Vector2 teleVel;
-        if (telePortal.isLinkFlipped)
-        {
-            col.shape = (PixelOct)teleCol.shape.Clone();
+        PixelPortal curPortal;
+        PixelCollider curCol;
+        SpriteRenderer curSprend;
+        PixelCollider otherCol;
+        SpriteRenderer otherSprend;
 
-            transform.rotation = teleSprend.transform.rotation;
-            transform.position = teleSprend.transform.position;
-            teleSprend.transform.localRotation = Quaternion.identity;
-            teleSprend.transform.localPosition = Vector3.zero;
-            Vector3 reflectAxis = new Vector3(Mathf.Cos(telePortal.teleNormal), Mathf.Sin(telePortal.teleNormal));
-            //transform.RotateAround(new Vector3(telePortal.start.x + telePortal.end.x + 1, telePortal.start.y +  telePortal.end.y + 1, transform.position.z), reflectAxis, 180f);
-            //transform.RotateAround(new Vector3(telePortal.start.x, telePortal.start.y), Vector3.forward, telePortal.linkRotation);
-            //transform.position += new Vector3(telePortal.linkOffset.x, telePortal.linkOffset.y);
-            //transform.position = new Vector3(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y), Mathf.RoundToInt(transform.position.z));
-            //Reflect(telePortal.start, telePortal.end, telePortal.teleNormal);
-            //Rotate(telePortal.start, telePortal.linkRotation);
-            //Move(telePortal.linkOffset);
-            teleDelta = PixelMath.RotateVector(Vector2.Reflect(delta, telePortal.teleNormalVec), telePortal.linkRotation);
-            teleVel = PixelMath.RotateVector(Vector2.Reflect(vel, telePortal.teleNormalVec), telePortal.linkRotation);
+        if (isPortalA)
+        {
+            curPortal = telePortalA;
+            curCol = teleColA;
+            curSprend = teleSprendA;
+            otherCol = teleColB;
+            otherSprend = teleSprendB;
         }
         else
         {
-            col.shape = (PixelOct)teleCol.shape.Clone();
-
-            transform.position = teleSprend.transform.position;
-            transform.rotation = teleSprend.transform.rotation;
-            teleSprend.transform.localRotation = Quaternion.identity;
-            teleSprend.transform.localPosition = Vector3.zero;
-            //transform.RotateAround(new Vector3(telePortal.start.x, telePortal.start.y), Vector3.forward, telePortal.linkRotation);
-            //transform.position += new Vector3(telePortal.linkOffset.x, telePortal.linkOffset.y);
-            transform.position = new Vector3(Mathf.Round(transform.position.x), Mathf.Round(transform.position.y), Mathf.Round(transform.position.z));
-            teleDelta = PixelMath.RotateVector(delta, telePortal.linkRotation);
-            teleVel = PixelMath.RotateVector(vel, telePortal.linkRotation);
+            curPortal = telePortalB;
+            curCol = teleColB;
+            curSprend = teleSprendB;
+            otherCol = teleColA;
+            otherSprend = teleSprendA;
         }
-        int boundDispX = Mathf.FloorToInt(teleDelta.x + (0f < teleDelta.x ? 1f : 0f));
-        int boundDispY = Mathf.FloorToInt(teleDelta.y + (0f < teleDelta.y ? 1f : 0f));
 
-        col.bounds = teleCol.bounds;
-        col.nearbyColliders = teleCol.nearbyColliders;
-        teleCol.SetBounds(new Vector2Int(boundDispX, boundDispY));
-        teleCol.nearbyColliders.Clear();
-        foreach (PixelCollider other in pixelPhysics.GetNearbyColliders(teleCol))
+        //print(((PixelOct)curCol.shape).left + ", " + ((PixelOct)curCol.shape).down);
+        col.shape = (PixelShape)curCol.shape.Clone();
+        transform.rotation = curSprend.transform.rotation;
+        transform.position = curSprend.transform.position;
+
+        curSprend.transform.localRotation = Quaternion.identity;
+        curSprend.transform.localPosition = Vector3.zero;
+
+        otherCol.shape = (PixelShape)teleColAB.shape.Clone();
+        //otherSprend.transform.localRotation = teleSprendAB.transform.localRotation;
+        //otherSprend.transform.localPosition = teleSprendAB.transform.localPosition;
+
+        teleColAB.shape = (PixelShape)col.shape.Clone();
+        teleSprendAB.transform.localRotation = Quaternion.identity;
+        teleSprendAB.transform.localPosition = Vector3.zero;
+
+        col.bounds = curCol.bounds;
+        col.nearbyColliders = curCol.nearbyColliders;
+
+        if (curPortal.isLinkFlipped)
         {
-            teleCol.nearbyColliders.Add(other);
-            other.nearbyColliders.Add(teleCol);
+            teleDelta = PixelMath.RotateVector(Vector2.Reflect(delta, curPortal.teleNormalVec), curPortal.linkRotation);
+            teleVel = PixelMath.RotateVector(Vector2.Reflect(vel, curPortal.teleNormalVec), curPortal.linkRotation);
         }
-        delta = Vector2.zero;// teleDelta;
+        else
+        {
+            teleDelta = PixelMath.RotateVector(delta, curPortal.linkRotation);
+            teleVel = PixelMath.RotateVector(vel, curPortal.linkRotation);
+        }
+
+        delta = teleDelta;
         vel = teleVel;
+    }
+
+    protected void TeleportBack(bool isPortalA)
+    {
+        print("back");
+        PixelCollider curCol;
+        SpriteRenderer curSprend;
+
+        if (isPortalA)
+        {
+            curCol = teleColA;
+            curSprend = teleSprendA;
+        }
+        else
+        {
+            curCol = teleColB;
+            curSprend = teleSprendB;
+        }
+
+        curCol.shape = (PixelShape)col.shape.Clone();
+        curSprend.transform.localRotation = Quaternion.identity;
+        curSprend.transform.localPosition = Vector3.zero;
+
+        teleColAB.shape = (PixelShape)col.shape.Clone();
+        teleSprendAB.transform.localRotation = Quaternion.identity;
+        teleSprendAB.transform.localPosition = Vector3.zero;
     }
 
     public override void PrePhysics()
     {
         base.PrePhysics();
+        /*
         if (inPortal)
         {
             Vector2 teleDelta;
@@ -222,6 +438,7 @@ public class PixelTeleBody : PixelBody
             teleCol.SetBounds(boundDisp);
             teleCol.nearbyColliders = pixelPhysics.GetNearbyColliders(teleCol);
         }
+        */
     }
 
     public override List<PixelCollider> GetActiveColliders()
@@ -230,9 +447,17 @@ public class PixelTeleBody : PixelBody
         if (isActive)
         {
             ret.Add(col);
-            if(inPortal)
+            if(inPortalA)
             {
-                ret.Add(teleCol);
+                ret.Add(teleColA);
+                if(inPortalB)
+                {
+                    ret.Add(teleColAB);
+                }
+            }
+            if(inPortalB)
+            {
+                ret.Add(teleColB);
             }
         }
         return ret;

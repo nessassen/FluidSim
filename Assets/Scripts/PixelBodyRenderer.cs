@@ -38,7 +38,9 @@ public class PixelBodyRenderer : MonoBehaviour
         sprend.sprite = spr;
         if(body is PixelTeleBody)
         {
-            ((PixelTeleBody)body).teleSprend.sprite = spr;
+            ((PixelTeleBody)body).teleSprendA.sprite = spr;
+            ((PixelTeleBody)body).teleSprendB.sprite = spr;
+            ((PixelTeleBody)body).teleSprendAB.sprite = spr;
         }
         return true;
     }

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FluidPursuer : MonoBehaviour
+public class EchoLocater : MonoBehaviour
 {
     [SerializeField] protected List<SpriteRenderer> sprends;
     [SerializeField] protected FluidSim fluidSim;
@@ -41,7 +41,6 @@ public class FluidPursuer : MonoBehaviour
         {
             return;
         }
-        print(sprends.Count);
         foreach (SpriteRenderer sprend in sprends)
         {
             int minX, maxX, countX, minY, maxY, countY;
@@ -60,16 +59,16 @@ public class FluidPursuer : MonoBehaviour
                 if (pixels[i].a == 0) continue;
                 float blueVariance = (float)(colors[i].b - .5f);
                 if (Mathf.Abs(blueVariance) < 1f / 256f) continue;
-                float u = i % countX;
-                float v = countY - 1 - (i / countX);
-                //if (u + .5f == dimensions.x / 2 || v + .5f == dimensions.y / 2) continue;
-                float dist = (new Vector2(u + .5f - countX / 2, v + .5f - countY / 2)).magnitude;
-                float uDist = u + .5f - countX / 2f;
-                float vDist = v + .5f - countY / 2f;
+                float u = (i % countX) + minX - offset.x;
+                float v = dimensions.y - 1 - (i / countX);
+                float uDist = u + .5f - dimensions.x / 2f;
+                float vDist = v + .5f - dimensions.y / 2f;
+                float dist = (new Vector2(uDist, vDist)).magnitude;
                 Vector2 pixelForce = new Vector2(uDist, -vDist) * Mathf.Abs(blueVariance) * fluidSim.fluidForce * pixels[i].a / dist;
                 netAmplitude += pixelForce;
                 netMagnitude += pixelForce.magnitude;
             }
+            print(maxY + ", " + offset.y);
         }
         if (pb == null) return;
         if (netMagnitude > moveThreshold)

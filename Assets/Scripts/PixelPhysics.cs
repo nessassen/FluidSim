@@ -156,41 +156,43 @@ public class PixelPhysics : MonoBehaviour
                     step = new Vector2Int(0, Math.Sign(curBody.delta.y));
                     curBody.yMovementDone = Math.Abs(curBody.delta.y) < .5f;
                 }
-                PixelCollider curCol = curBody.col;
-                foreach (PixelCollider otherCol in curCol.nearbyColliders)
+                foreach (PixelCollider curCol in curBody.GetActiveColliders())
                 {
-                    if (CheckCollision(curCol.shape, otherCol.shape, step))
+                    foreach (PixelCollider otherCol in curCol.nearbyColliders)
                     {
-                        otherBody = otherCol.body;
-                        int normal = GetCollisionNormal(curCol, otherCol, step);
-                        switch(HandleCollision(curBody, otherBody, step, normal))
+                        if (CheckCollision(curCol.shape, otherCol.shape, step))
                         {
-                            case 0:
-                                //Normal Collision
-                                curBody.xMovementDone = true;
-                                curBody.yMovementDone = true;
-                                otherBody.xMovementDone = true;
-                                otherBody.yMovementDone = true;
-                                break;
+                            otherBody = otherCol.body;
+                            int normal = GetCollisionNormal(curCol, otherCol, step);
+                            switch (HandleCollision(curBody, otherBody, step, normal))
+                            {
+                                case 0:
+                                    //Normal Collision
+                                    curBody.xMovementDone = true;
+                                    curBody.yMovementDone = true;
+                                    otherBody.xMovementDone = true;
+                                    otherBody.yMovementDone = true;
+                                    break;
 
-                            case 1:
-                                //Bad Normal/Clipping
-                                curBody.xMovementDone = true;
-                                curBody.yMovementDone = true;
-                                otherBody.xMovementDone = true;
-                                otherBody.yMovementDone = true;
-                                break;
+                                case 1:
+                                    //Bad Normal/Clipping
+                                    curBody.xMovementDone = true;
+                                    curBody.yMovementDone = true;
+                                    otherBody.xMovementDone = true;
+                                    otherBody.yMovementDone = true;
+                                    break;
 
-                            case 2:
-                                //Cancelled Collision
-                                break;
+                                case 2:
+                                    //Cancelled Collision
+                                    break;
 
-                            case 3:
-                                //Phantom Collision
-                                colPhantom = true;
-                                break;
+                                case 3:
+                                    //Phantom Collision
+                                    colPhantom = true;
+                                    break;
+                            }
+                            break;
                         }
-                        break;
                     }
                 }
                 if ((step.x != 0 && !curBody.xMovementDone) || (step.y != 0 && !curBody.yMovementDone))
@@ -257,10 +259,12 @@ public class PixelPhysics : MonoBehaviour
         List<PixelCollider> ret = new List<PixelCollider>();
         foreach (PixelBody otherBody in pixelBodys.Where(otherBody => otherBody != col.body))
         {
-            PixelCollider otherCol = otherBody.col;
-            if ((col.layers & otherCol.mask) != 0 && (otherCol.layers & col.mask) != 0 && PixelShape.CheckOverlap(col.bounds, otherCol.bounds))
+            foreach (PixelCollider otherCol in otherBody.GetActiveColliders())
             {
-                ret.Add(otherCol);
+                if ((col.layers & otherCol.mask) != 0 && (otherCol.layers & col.mask) != 0 && PixelShape.CheckOverlap(col.bounds, otherCol.bounds))
+                {
+                    ret.Add(otherCol);
+                }
             }
         }
         return ret;

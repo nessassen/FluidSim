@@ -68,7 +68,7 @@ public class PlayerControllerFluid : MonoBehaviour
                 sprend.enabled = true;
             }
             if (pb != null)
-                pb.drag = defaultDrag;
+                pb.drag = brakeDrag;
         }
         spacePressed = false;
     }

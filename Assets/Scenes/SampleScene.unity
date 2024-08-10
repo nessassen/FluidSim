@@ -1738,7 +1738,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveForce: 1500
   defaultDrag: 1
-  brakeDrag: 4
+  brakeDrag: 3
   pb: {fileID: 884980090}
   rb: {fileID: 0}
   fluidSprends:
@@ -2351,7 +2351,7 @@ GameObject:
   - component: {fileID: 1469141044}
   - component: {fileID: 1469141047}
   m_Layer: 0
-  m_Name: PixelPursuer
+  m_Name: EchoLocater
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -41,11 +41,12 @@ public class FluidPursuer : MonoBehaviour
         {
             return;
         }
+        print(sprends.Count);
         foreach (SpriteRenderer sprend in sprends)
         {
             int minX, maxX, countX, minY, maxY, countY;
             if (!sprend.enabled || !sprend.gameObject.activeInHierarchy) continue;
-            Vector2 offset = (new Vector2(sprend.transform.position.x, -sprend.transform.position.y) - dimensions / 2) - (new Vector2(fluidSim.transform.position.x, -fluidSim.transform.position.y) - fluidSim.dimensions / 2);
+            Vector2 offset = new Vector2(sprend.transform.position.x - fluidSim.transform.position.x + fluidSim.dstTex.width / 2, sprend.transform.position.y - fluidSim.transform.position.y + fluidSim.dstTex.height / 2);
             minX = (int)Mathf.Max(offset.x, 0f);
             maxX = (int)Mathf.Min(offset.x + dimensions.x, fluidSim.dstTex.width - 1);
             countX = maxX - minX;
@@ -53,18 +54,18 @@ public class FluidPursuer : MonoBehaviour
             maxY = (int)Mathf.Min(offset.y + dimensions.y, fluidSim.dstTex.height - 1);
             countY = maxY - minY;
             if (offset.x > maxX || offset.y > maxY || offset.x + dimensions.x < minX || offset.y + dimensions.y < minY) continue; //Return if out of bounds
-            Color[] colors = fluidSim.dstTex.GetPixels(Mathf.RoundToInt(offset.x), Mathf.RoundToInt(offset.y), countX, countY); //Needs some kind of clamping function
+            Color[] colors = fluidSim.dstTex.GetPixels(minX, minY, countX, countY);
             for (int i = 0; i < colors.Length; ++i)
             {
                 if (pixels[i].a == 0) continue;
-                float blueVariance = (float)(colors[i].b - .5);
+                float blueVariance = (float)(colors[i].b - .5f);
                 if (Mathf.Abs(blueVariance) < 1f / 256f) continue;
                 float u = i % countX;
-                float v = i / countY;
+                float v = countY - 1 - (i / countX);
                 //if (u + .5f == dimensions.x / 2 || v + .5f == dimensions.y / 2) continue;
-                float dist = (new Vector2(u + .5f, v + .5f) - (dimensions / 2)).magnitude;
-                float uDist = u + .5f - dimensions.x / 2;
-                float vDist = v + .5f - dimensions.y / 2;
+                float dist = (new Vector2(u + .5f - countX / 2, v + .5f - countY / 2)).magnitude;
+                float uDist = u + .5f - countX / 2f;
+                float vDist = v + .5f - countY / 2f;
                 Vector2 pixelForce = new Vector2(uDist, -vDist) * Mathf.Abs(blueVariance) * fluidSim.fluidForce * pixels[i].a / dist;
                 netAmplitude += pixelForce;
                 netMagnitude += pixelForce.magnitude;
@@ -73,7 +74,6 @@ public class FluidPursuer : MonoBehaviour
         if (pb == null) return;
         if (netMagnitude > moveThreshold)
         {
-            //print(netMagnitude);
             pb.drag = defaultDrag;
             pb.AddForce(moveForce * netAmplitude.normalized);
         }

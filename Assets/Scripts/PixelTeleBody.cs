@@ -52,13 +52,58 @@ public class PixelTeleBody : PixelBody
 
     protected override void Update()
     {
-        //PixelOct oct = (PixelOct)col.shape;
-        //print(oct.left + ", " + oct.down);
     }
 
     public override void Move(Vector2Int step)
     {
         TeleMove(step);
+        PixelOct oct = (PixelOct)col.shape;
+        Vector2 vec = new Vector2(oct.left, oct.down);
+        Vector2 pos = new Vector2(transform.position.x, transform.position.y);
+        if (vec != pos)
+        {
+            print("Main Desync");
+            print(vec);
+            print(pos);
+            print(step);
+            Debug.Break();
+        }
+        oct = (PixelOct)teleColA.shape;
+        vec = new Vector2(oct.left, oct.down);
+        pos = new Vector2(teleSprendA.transform.position.x, teleSprendA.transform.position.y);
+        if (vec != pos)
+        {
+            print("A Desync");
+            print(teleSprendA.transform.position);
+            print(vec);
+            print(pos);
+            print(step);
+            Debug.Break();
+        }
+        oct = (PixelOct)teleColB.shape;
+        vec = new Vector2(oct.left, oct.down);
+        pos = new Vector2(teleSprendB.transform.position.x, teleSprendB.transform.position.y);
+        if (vec != pos)
+        {
+            print("B Desync");
+            print(transform.position);
+            print(vec);
+            print(pos);
+            print(step);
+            Debug.Break();
+        }
+        oct = (PixelOct)teleColAB.shape;
+        vec = new Vector2(oct.left, oct.down);
+        pos = new Vector2(teleSprendAB.transform.position.x, teleSprendAB.transform.position.y);
+        if (vec != pos)
+        {
+            print("AB Desync");
+            print(transform.position);
+            print(vec);
+            print(pos);
+            print(step);
+            Debug.Break();
+        }
     }
 
     public virtual void TeleMove(Vector2Int step)
@@ -330,12 +375,12 @@ public class PixelTeleBody : PixelBody
 
     protected virtual void TeleportThrough(bool isPortalA)
     {
-        print("through");
         Vector2 teleDelta;
         Vector2 teleVel;
         PixelPortal curPortal;
         PixelCollider curCol;
         SpriteRenderer curSprend;
+        PixelPortal otherPortal;
         PixelCollider otherCol;
         SpriteRenderer otherSprend;
 
@@ -344,6 +389,7 @@ public class PixelTeleBody : PixelBody
             curPortal = telePortalA;
             curCol = teleColA;
             curSprend = teleSprendA;
+            otherPortal = telePortalB;
             otherCol = teleColB;
             otherSprend = teleSprendB;
         }
@@ -352,11 +398,11 @@ public class PixelTeleBody : PixelBody
             curPortal = telePortalB;
             curCol = teleColB;
             curSprend = teleSprendB;
+            otherPortal = telePortalA;
             otherCol = teleColA;
             otherSprend = teleSprendA;
         }
 
-        //print(((PixelOct)curCol.shape).left + ", " + ((PixelOct)curCol.shape).down);
         col.shape = (PixelShape)curCol.shape.Clone();
         transform.rotation = curSprend.transform.rotation;
         transform.position = curSprend.transform.position;
@@ -364,7 +410,14 @@ public class PixelTeleBody : PixelBody
         curSprend.transform.localRotation = Quaternion.identity;
         curSprend.transform.localPosition = Vector3.zero;
 
-        otherCol.shape = (PixelShape)teleColAB.shape.Clone();
+        if(otherPortal == null)
+        {
+            otherCol.shape = (PixelShape)col.shape.Clone();
+        }
+        else
+        {
+            otherCol.shape = (PixelShape)teleColAB.shape.Clone();
+        }
         //otherSprend.transform.localRotation = teleSprendAB.transform.localRotation;
         //otherSprend.transform.localPosition = teleSprendAB.transform.localPosition;
 
@@ -392,7 +445,6 @@ public class PixelTeleBody : PixelBody
 
     protected void TeleportBack(bool isPortalA)
     {
-        print("back");
         PixelCollider curCol;
         SpriteRenderer curSprend;
 

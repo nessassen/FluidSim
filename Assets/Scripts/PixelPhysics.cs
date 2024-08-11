@@ -73,7 +73,10 @@ public class PixelPhysics : MonoBehaviour
 
         foreach (PixelBody body in dynamicBodys)
         {
-            body.col.nearbyColliders = GetNearbyColliders(body.col);
+            foreach (PixelCollider curCol in body.GetActiveColliders())
+            {
+                curCol.nearbyColliders = GetNearbyColliders(curCol);
+            }
         }
     }
 

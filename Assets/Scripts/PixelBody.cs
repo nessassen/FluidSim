@@ -105,8 +105,11 @@ public class PixelBody : MonoBehaviour
             int boundDispX = Mathf.FloorToInt(delta.x + (0f < delta.x ? 1f : 0f));
             int boundDispY = Mathf.FloorToInt(delta.y + (0f < delta.y ? 1f : 0f));
             Vector2Int boundDisp = new Vector2Int(boundDispX, boundDispY);
-            col.SetBounds(boundDisp);
-            col.nearbyColliders.Clear();
+            foreach (PixelCollider curCol in GetActiveColliders())
+            {
+                curCol.SetBounds(boundDisp);
+                curCol.nearbyColliders.Clear();
+            }
         }
     }
 

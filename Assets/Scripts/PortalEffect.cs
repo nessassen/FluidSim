@@ -4,12 +4,10 @@ using UnityEngine;
 
 public class PortalEffect : MonoBehaviour
 {
-    public SpriteRenderer rend0;
-    public SpriteRenderer rend1;
+    public SpriteRenderer sprend;
 
-    public void SetColors(Color col0, Color col1)
+    public void SetColor(Color color)
     {
-        rend0.color = col0;
-        rend1.color = col1;
+        sprend.color = color;
     }
 }

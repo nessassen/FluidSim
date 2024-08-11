@@ -2456,8 +2456,8 @@ MonoBehaviour:
   fluidSim: {fileID: 519420033}
   pb: {fileID: 1469141045}
   moveForce: 1000
-  moveThreshold: 0.1
-  brakeDrag: 4
+  moveThreshold: 0.2
+  brakeDrag: 0.05
   defaultDrag: 4
 --- !u!1 &1504855528
 GameObject:

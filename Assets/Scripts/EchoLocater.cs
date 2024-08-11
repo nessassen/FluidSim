@@ -60,7 +60,7 @@ public class EchoLocater : MonoBehaviour
                 float blueVariance = (float)(colors[i].b - .5f);
                 if (Mathf.Abs(blueVariance) < 1f / 256f) continue;
                 float u = (i % countX) + minX - offset.x;
-                float v = dimensions.y - 1 - (i / countX);
+                float v = dimensions.y - (i / countX);
                 float uDist = u + .5f - dimensions.x / 2f;
                 float vDist = v + .5f - dimensions.y / 2f;
                 float dist = (new Vector2(uDist, vDist)).magnitude;
@@ -68,10 +68,9 @@ public class EchoLocater : MonoBehaviour
                 netAmplitude += pixelForce;
                 netMagnitude += pixelForce.magnitude;
             }
-            print(maxY + ", " + offset.y);
         }
         if (pb == null) return;
-        if (netMagnitude > moveThreshold)
+        if (netMagnitude >= moveThreshold)
         {
             pb.drag = defaultDrag;
             pb.AddForce(moveForce * netAmplitude.normalized);

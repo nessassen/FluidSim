@@ -8,7 +8,6 @@ public class PlayerControllerFluid : MonoBehaviour
     [SerializeField] protected float defaultDrag;
     [SerializeField] protected float brakeDrag;
     [SerializeField] protected PixelBody pb;
-    [SerializeField] protected Rigidbody2D rb;
     [SerializeField] protected List<SpriteRenderer> fluidSprends;
     protected float sonarTimer;
     [SerializeField] protected float sonarCD;
@@ -55,8 +54,6 @@ public class PlayerControllerFluid : MonoBehaviour
                 }
                 if (pb != null)
                     pb.drag = defaultDrag;
-                if (rb != null && rb.IsAwake())
-                    rb.AddForce(moveForce * -inputDir);
                 if (pb != null && pb.isActiveAndEnabled)
                     pb.AddForce(moveForce * -inputDir);
             }

@@ -41,6 +41,7 @@ public class FluidSim : MonoBehaviour
 
         copyMaterial = copyRenderer.material;
         copyMaterial.SetTexture("_MainTex", dstTex);
+        Application.targetFrameRate = 60;
     }
 
     void Update()
